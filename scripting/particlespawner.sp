@@ -432,6 +432,22 @@ stock void RevertParticles(int client)
 	PrintToChat(client, "%s Particle changes reverted!", PS_PREFIX);
 }
 
+stock void TeleportEntityToAim(int client, int entity)
+{
+	float eyeAngles[3], eyePos[3];
+	GetClientEyeAngles(client, eyeAngles);
+	GetClientEyePosition(client, eyePos);
+	float end[3];
+	Handle trace = TR_TraceRayFilterEx(eyePos, eyeAngles, MASK_ALL, RayType_Infinite, TraceFilterNotSelf, client);
+	if(TR_DidHit(trace))
+	{
+		TR_GetEndPosition(end, trace);
+		g_bConfigChanged = true;
+		TeleportEntity(entity, end, NULL_VECTOR, NULL_VECTOR);
+	}
+	CloseHandle(trace);
+}
+
 stock int PrecacheParticleSystem(const char[] particleSystem)
 {
     static int particleEffectNames = INVALID_STRING_TABLE;
@@ -537,6 +553,7 @@ public void EditParticle(int client, int particleEntity)
 	menu.AddItem(szEntityRef, "Move Forward/Back");
 	menu.AddItem(szEntityRef, szUnits);
 	menu.AddItem(szEntityRef, szMoveDirection);
+	menu.AddItem(szEntityRef, "Bring Particle To Aim");
 	menu.AddItem(szEntityRef, "Delete Particle");
 	menu.ExitBackButton = true;
 	menu.ExitButton = true;
@@ -651,6 +668,11 @@ public int EditorMenuHandler(Menu menu, MenuAction action, int param1, int param
 					EditParticle(param1, entity);
 				}
 				case 5:
+				{
+					TeleportEntityToAim(param1, entity);
+					MainEditor(param1);
+				}
+				case 6:
 				{
 					DeleteParticle(entity);
 					PrintToChat(param1, "%s Particle \x0C%s \x09deleted!", PS_PREFIX, szName);
